@@ -1,0 +1,72 @@
+' OomFindMatchesForTest
+
+Sub FindMatchesForTest()
+    'See https://learn.microsoft.com/en-us/office/vba/api/outlook.oldefaultfolders
+    
+    Dim oFolder As MAPIFolder
+    Dim sFilter As String
+    Dim oFilteredItems As Variant
+    
+    sFilter = "@SQL=urn:schemas:httpmail:subject LIKE '%RE: Graph%'"
+    
+    Debug.Print "Search Inbox"
+    RestrictSearchAndDisplay olFolderInbox, sFilter
+    Debug.Print ""
+
+    Debug.Print "Search Outbox"
+    RestrictSearchAndDisplay olFolderOutbox, sFilter
+    Debug.Print ""
+
+    Debug.Print "Search SentItems"
+    RestrictSearchAndDisplay olFolderSentMail, sFilter
+    Debug.Print ""
+
+    
+End Sub
+
+Sub RestrictSearchAndDisplay(ByVal oFolder, ByVal sFilter As String)
+
+    Dim olNS As NameSpace
+    Dim oFilteredItems As Items
+    Dim oEmail As MailItem
+    
+    On Error GoTo ErrorHandler
+
+    Set olNS = GetNamespace("MAPI")
+    Set oFolder = olNS.GetDefaultFolder(oFolder)
+    Set oFilteredItems = oFolder.Items.Restrict(sFilter)
+    
+    Dim dq As String
+    Dim Seperator As String
+    Dim sLine As String
+    
+    dq = Chr(34) ' Double Quote
+    Seperator = Chr(9) ' Tab
+ 
+    If oFilteredItems.Count = 0 Then
+        Debug.Print "<Nothing Found>"
+    End If
+    
+    For Each oEmail In oFilteredItems
+        If TypeOf oEmail Is MailItem Then
+            'sLine = dq + oEmail.Subject
+            sLine = dq + oEmail.Subject + dq + Seperator + dq + CStr(oEmail.CreationTime) + dq + Seperator + dq + CStr(oEmail.Sent) + dq
+            'sLine = dq + oEmail.Subject + dq + Seperator + dq + CStr(oEmail.CreationTime) + dq + Seperator + dq + CStr(oEmail.SentOn) + dq
+            Debug.Print sLine
+        End If
+    Next oEmail
+    
+    'Debug.Print ""
+     
+    Exit Sub
+
+ErrorHandler:
+    Debug.Print ("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * ")
+    Debug.Print ("* * * Error -  On Error GoTo ErrorHandler - Start")
+    Debug.Print ("Description: " + Err.Description)
+    Debug.Print ("Error Number: " + CStr(Err.Number))
+    Debug.Print ("* * * Error -  On Error GoTo ErrorHandler - End")
+    Debug.Print ("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * ")
+    Resume Next
+    
+End Sub
